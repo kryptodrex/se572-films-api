@@ -32,29 +32,69 @@ app.post(basePath + "/login", async (req, res) => {
     password: req.body.password
   }
 
-  try {
-    await User.countDocuments({ username: user.username, password: user.password }, function (e, count) {
-      if (count > 0) {
-        console.log(":: User " + user.username + " has access, issuing token ::");
-        const jwtSecret = utils.getJwtSecret(user.password);
-        jwt.sign({ user }, jwtSecret, (err, token) => {
-          res.json({
-            status: 200,
-            token
-          })
-        })
-      } else {
-        console.log(":: User " + user.username + " not found ::");
-        utils.returnError(res, 403, "User " + user.username + " does not exist or password is incorrect");
-      }
-    }).clone()
-      .catch(e => { 
-        console.log(e);
-        utils.returnError(res, 400, e.message);
-      });
-  } catch (e) {
-    console.log(e);
-    utils.returnError(res, 400, e.message);
+  function signTokenForUser(status) {
+    const jwtSecret = utils.getJwtSecret(user.password);
+    jwt.sign({ user }, jwtSecret, (err, token) => {
+      res.json({
+        status: status,
+        token
+      })
+    })
+  }
+
+  const isNew = req.query.isNew;
+
+  if (!isNew) {
+
+    try {
+      await User.countDocuments({ username: user.username, password: user.password }, function (e, count) {
+        if (count > 0) {
+          console.log(":: User " + user.username + " has access, issuing token ::");
+          signTokenForUser(200);
+        } else {
+          console.log(":: User " + user.username + " not found ::");
+          utils.returnError(res, 403, "User " + user.username + " does not exist or password is incorrect");
+        }
+      }).clone()
+        .catch(e => { 
+          console.log(e);
+          utils.returnError(res, 400, e.message);
+        });
+    } catch (e) {
+      console.log(e);
+      utils.returnError(res, 400, e.message);
+    }
+  } else {
+    try {
+      await User.countDocuments({ username: user.username }, function (e, count) {
+        if (count > 0) { // if user exists, return error
+          console.log(":: User " + user.username + " already exists ::");
+          utils.returnError(res, 400, "User " + user.username + " already exists");
+        } else { // if user does not exist, create user
+          console.log(":: User " + user.username + " does not exist, creating ::");
+          const newUser = new User({ // create new user object
+            username: user.username,
+            password: user.password
+          });
+          newUser.save() // save user
+            .then(() => {
+              console.log(":: User " + user.username + " created ::");
+              signTokenForUser(201);
+            })
+            .catch(e => {
+              console.log(e);
+              utils.returnError(res, 400, e.message);
+            });
+        }
+      }).clone()
+        .catch(e => {
+          console.log(e);
+          utils.returnError(res, 400, e.message);
+        });
+    } catch (e) {
+      console.log(e);
+      utils.returnError(res, 400, e.message);
+    }
   }
   
 })
