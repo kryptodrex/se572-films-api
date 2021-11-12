@@ -22,6 +22,10 @@ const FilmSchema = new Schema({
     insertedOn: {
         type: Date,
         required: true
+    },
+    updatedOn: {
+        type: Date,
+        required: false
     }
 });
 

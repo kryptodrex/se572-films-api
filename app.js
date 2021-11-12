@@ -180,6 +180,8 @@ app.put(basePath + "/films/:id", utils.verifyToken, async (req, res) => {
       if (film) {
         if (name) film.name = name;
         if (rating) film.rating = rating;
+        film.updatedOn = new Date();
+        
         await film.save();
   
         console.log(":: Film with ID " + id + " was updated ::")
