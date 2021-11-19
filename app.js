@@ -129,6 +129,33 @@ app.get(basePath + "/films", utils.verifyToken, async (req, res) => {
   
 });
 
+// GET /films/:id - to get a film by its id
+app.get(basePath + "/films/:id", utils.verifyToken, async (req, res) => {
+  const id = req.params.id;
+  let addedBy = utils.decodeToken(req.headers['authorization']).user.username;
+
+  if (id.length == 24) { // if id is a valid mongoose id
+    try {
+      // const films = await Film.find({}); // get all the films that the user added to DB
+      var film = await Film.findOne({_id: id, addedBy: addedBy});
+
+      if (film) {
+        console.log(":: Returning the film :: ID " + id);
+        res.json(film);
+      } else {
+        console.log(":: Film not found for user :: ID " + id);
+        utils.returnError(res, 404, "Film not found for user");
+      }
+    } catch (e) {
+      console.log(e);
+      utils.returnError(res, 400, e.message);
+    }
+  } else { // if id is not valid
+    console.log(":: Invalid ID ::");
+    utils.returnError(res, 400, "Invalid ID");
+  }       
+});
+
 // POST /films - To add a film to the list
 app.post(basePath + "/films", utils.verifyToken, async (req, res) => {
   let addedBy = utils.decodeToken(req.headers['authorization']).user.username;
@@ -139,18 +166,22 @@ app.post(basePath + "/films", utils.verifyToken, async (req, res) => {
     var film = new Film({
       name: req.body.name,
       rating: req.body.rating,
+      releaseYear: req.body.releaseYear,
+      posterUrl: req.body.posterUrl,
+      notes: req.body.notes,
       addedBy: addedBy,
       insertedOn: today
     })
 
     await film.save(); // save the film data to DB
 
-    console.log(":: Film '" + film.name + "' was created ::");
+    console.log(":: Film '" + film.name + "' was created :: ID: " + film._id);
 
     res.status(201);
     res.json({
       status: 201,
-      message: "Film was successfully added."
+      message: "Film was successfully added",
+      id: film._id
     });
   } catch(e) { // catch any errors thrown
     console.log(e);
@@ -163,31 +194,34 @@ app.put(basePath + "/films/:id", utils.verifyToken, async (req, res) => {
   const id = req.params.id;
   const addedBy = utils.decodeToken(req.headers['authorization']).user.username;
 
-  // var updatedFilm = new Film({
-  //   name: req.body.name,
-  //   rating: req.body.rating
-  // })
+  var updatedData = {
+    name: req.body.name,
+    rating: req.body.rating,
+    releaseYear: req.body.releaseYear,
+    posterUrl: req.body.posterUrl,
+    notes: req.body.notes,
+    updatedOn: new Date()
+  }
 
-  const name = req.body.name;
-  const rating = req.body.rating;
-
-  if (name || rating) {
+  if (updatedData.name || updatedData.rating || updatedData.releaseYear || updatedData.posterUrl) {
     try {
-    
-      // var film = await Film.findOneAndUpdate({_id: id, addedBy: addedBy}, updatedFilm, { new: true })
       var film = await Film.findOne({_id: id, addedBy: addedBy});
   
       if (film) {
-        if (name) film.name = name;
-        if (rating) film.rating = rating;
-        film.updatedOn = new Date();
-        
+        if (updatedData.name) film.name = updatedData.name;
+        if (updatedData.rating) film.rating = updatedData.rating;
+        if (updatedData.releaseYear) film.releaseYear = updatedData.releaseYear;
+        if (updatedData.posterUrl) film.posterUrl = updatedData.posterUrl;
+        if (updatedData.notes) film.notes = updatedData.notes;
+        film.updatedOn = updatedData.updatedOn;
+
         await film.save();
   
         console.log(":: Film with ID " + id + " was updated ::")
         res.json({
           status: 200,
-          message: "Film with ID " + id + " was updated"
+          message: "Film was successfully updated",
+          id: film._id
         })
       } else {
         utils.returnError(res, 404, "Film not found for user");
@@ -198,7 +232,7 @@ app.put(basePath + "/films/:id", utils.verifyToken, async (req, res) => {
       utils.returnError(res, 400, e.message);
     }
   } else {
-    utils.returnError(res, 400, "Please supply a name or rating value to update for the film.")
+    utils.returnError(res, 400, "Please supply at least one updated field for the film.")
   }
 
 })
