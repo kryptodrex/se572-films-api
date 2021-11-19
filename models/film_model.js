@@ -14,6 +14,21 @@ const FilmSchema = new Schema({
         enum: ['*****','****','***','**','*'],
         default: '*****'
     },
+    releaseYear: {
+        type: Number,
+        required: false,
+        min: 1800
+    },
+    posterUrl: {
+        type: String,
+        required: false,
+        validate: /\S+/
+    },
+    notes: {
+        type: String,
+        required: false,
+        validate: /\S+/
+    },
     addedBy: {
         type: String,
         required: true,
