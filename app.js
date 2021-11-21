@@ -5,8 +5,6 @@ const jwt = require('jsonwebtoken');
 
 require('dotenv').config();
 
-// const jwtSecret = process.env.JWT_SECRET;
-
 const basePath = "/api/v1";
 
 const Film = require('./models/film_model');
