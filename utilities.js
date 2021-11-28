@@ -1,6 +1,5 @@
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
-// const jwtSecret = process.env.JWT_SECRET;
 const Film = require('./models/film_model');
 
 var UTIL = (() => {
