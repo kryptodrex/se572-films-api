@@ -201,7 +201,7 @@ app.put(basePath + "/films/:id", utils.verifyToken, async (req, res) => {
     updatedOn: new Date()
   }
 
-  if (updatedData.name || updatedData.rating || updatedData.releaseYear || updatedData.posterUrl) {
+  if (updatedData.name || updatedData.rating || updatedData.releaseYear || updatedData.posterUrl || updatedData.notes) { // if there is data to update
     try {
       var film = await Film.findOne({_id: id, addedBy: addedBy});
   
@@ -279,44 +279,5 @@ app.delete(basePath + "/films/:id", utils.verifyToken, async (req, res) => {
   }
   
 })
-
-
-// reusable function to return errors
-// function utils.returnError(res, stat, msg) {
-//     res.status(stat);
-//     res.json({
-//       status: stat,
-//       message: msg
-//     })
-// }
-
-// // function to validate the jwt token passed in on certain endpoints
-// function verifyToken(req, res, next) {
-//   const bearerHeader = req.headers['authorization'];
-//   if (typeof bearerHeader !== 'undefined') {
-//     const bearerToken = bearerHeader.split(' ')[1];
-//     jwt.verify(bearerToken, jwtSecret, (err, authData) => {
-//       if (err) {
-//         utils.returnError(res, 403, err.message);
-//       } else {
-//         next();
-//       }
-//     })
-//   } else {
-//     utils.returnError(res, 403, 'Token is invalid')
-//   }
-// }
-
-// // function to check if user is associated with the film
-// function checkfilmAddedByUser(req) {
-//   let id = req.params.id;
-//   let addedBy = jwt.decode(req.headers['authorization'].split(' ')[1]).user.username;
-
-//   let film = await Film.find({_id: id, addedBy: addedBy});
-
-//   if (film === 0) return false
-//   else return true
-// }
-
 
 module.exports = app;
