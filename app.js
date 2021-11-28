@@ -132,7 +132,7 @@ app.get(basePath + "/films/:id", utils.verifyToken, async (req, res) => {
   const id = req.params.id;
   let addedBy = utils.decodeToken(req.headers['authorization']).user.username;
 
-  if (id.length == 24) { // if id is a valid mongoose id
+  if (utils.checkIdLength(id)) { // if id is a valid mongoose id
     try {
       // const films = await Film.find({}); // get all the films that the user added to DB
       var film = await Film.findOne({_id: id, addedBy: addedBy});
@@ -201,38 +201,42 @@ app.put(basePath + "/films/:id", utils.verifyToken, async (req, res) => {
     updatedOn: new Date()
   }
 
-  if (updatedData.name || updatedData.rating || updatedData.releaseYear || updatedData.posterUrl || updatedData.notes) { // if there is data to update
-    try {
-      var film = await Film.findOne({_id: id, addedBy: addedBy});
-  
-      if (film) {
-        if (updatedData.name) film.name = updatedData.name;
-        if (updatedData.rating) film.rating = updatedData.rating;
-        if (updatedData.releaseYear) film.releaseYear = updatedData.releaseYear;
-        if (updatedData.posterUrl) film.posterUrl = updatedData.posterUrl;
-        if (updatedData.notes) film.notes = updatedData.notes;
-        film.updatedOn = updatedData.updatedOn;
+  if (utils.checkIdLength(id)) { // if id is a valid mongoose id
+    if (updatedData.name || updatedData.rating || updatedData.releaseYear || updatedData.posterUrl || updatedData.notes) { // if there is data to update
+      try {
+        var film = await Film.findOne({_id: id, addedBy: addedBy});
+    
+        if (film) {
+          if (updatedData.name) film.name = updatedData.name;
+          if (updatedData.rating) film.rating = updatedData.rating;
+          if (updatedData.releaseYear) film.releaseYear = updatedData.releaseYear;
+          if (updatedData.posterUrl) film.posterUrl = updatedData.posterUrl;
+          if (updatedData.notes) film.notes = updatedData.notes;
+          film.updatedOn = updatedData.updatedOn;
 
-        await film.save();
-  
-        console.log(":: Film with ID " + id + " was updated ::")
-        res.json({
-          status: 200,
-          message: "Film was successfully updated",
-          id: film._id
-        })
-      } else {
-        utils.returnError(res, 404, "Film not found for user");
+          await film.save();
+    
+          console.log(":: Film with ID " + id + " was updated ::")
+          res.json({
+            status: 200,
+            message: "Film was successfully updated",
+            id: film._id
+          })
+        } else {
+          utils.returnError(res, 404, "Film not found for user");
+        }
+    
+      } catch (e) {
+        console.log(e);
+        utils.returnError(res, 400, e.message);
       }
-  
-    } catch (e) {
-      console.log(e);
-      utils.returnError(res, 400, e.message);
+    } else {
+      utils.returnError(res, 400, "Please supply at least one updated field for the film.")
     }
-  } else {
-    utils.returnError(res, 400, "Please supply at least one updated field for the film.")
+  } else { // if id is not valid
+    console.log(":: Invalid ID ::");
+    utils.returnError(res, 400, "Invalid ID");
   }
-
 })
 
 // DELETE /films - to clear the entire film list
@@ -262,20 +266,24 @@ app.delete(basePath + "/films/:id", utils.verifyToken, async (req, res) => {
   let id = req.params.id;
   let addedBy = utils.decodeToken(req.headers['authorization']).user.username;
 
-  try {
-    let film = await Film.findOneAndDelete({_id: id, addedBy: addedBy});
-    if (film) {
-      console.log(":: Film with ID " + id + " was removed ::");
-      res.json({
-        status: 200,
-        message: "Film was removed"
-      });
-    } else {
-      utils.returnError(res, 404, "Film not found for user");
-    } 
-  } catch(e) {
-    console.log(e);
-    utils.returnError(res, 400, e.message);
+  if (utils.checkIdLength(id)) { // if id is a valid mongoose id
+    try {
+      let film = await Film.findOneAndDelete({_id: id, addedBy: addedBy});
+      if (film) {
+        console.log(":: Film with ID " + id + " was removed ::");
+        res.json({
+          status: 200,
+          message: "Film was removed"
+        });
+      } else {
+        utils.returnError(res, 404, "Film not found for user");
+      } 
+    } catch(e) {
+      console.log(e);
+      utils.returnError(res, 400, e.message);
+    }
+  } else {
+    utils.returnError(res, 400, "Invalid ID");  // if id is not valid
   }
   
 })
