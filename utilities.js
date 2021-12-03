@@ -1,6 +1,5 @@
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
-// const jwtSecret = process.env.JWT_SECRET;
 const Film = require('./models/film_model');
 
 var UTIL = (() => {
@@ -52,13 +51,20 @@ var UTIL = (() => {
         else return true
     }
 
+    // function to check id length
+    var checkIdLength = (id) => {
+        if (id.length !== 24) return false;
+        else return true;
+    }
+
 
     return {
         getJwtSecret,
         returnError,
         verifyToken,
         decodeToken,
-        checkFilmAddedByUser
+        checkFilmAddedByUser,
+        checkIdLength
     }
 }
 )();
